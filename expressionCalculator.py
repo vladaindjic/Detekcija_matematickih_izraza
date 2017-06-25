@@ -447,6 +447,7 @@ def calucateOneExpressionSimpleCNN(expression_parts, model):
     # kako izgleda prepoznati izra
     string_expression = "".join(prediction_characters)
     # koja je njegova vrednost
+    print("Ovde mi nesto puca a nemam pojma zasto: {0}".format(string_expression))
     result_expression = eval(string_expression)
     # string koji vracamo ima format "string_izra=vrednost_izraza"
     retVal = "{0}={1}".format(string_expression, result_expression)
@@ -568,7 +569,7 @@ def makeSimpleNN():
     showInformationAboutTraining(hist)
     # Procena modela
     scores = model.evaluate(X_test, y_test, verbose=0)
-    print("\n\n\n\tOvo je greska nakon treniranja jednostavne CNN: {0:.2f}%".format(100-scores[1]*100))
+    print("\n\n\n\tOvo je greska nakon treniranja jednostavne NN: {0:.2f}%".format(100-scores[1]*100))
     return model
 
 
@@ -678,7 +679,7 @@ def evaluateSimpleNN(real_results):
     # procentualna uspesno jednostavne NN
     procent = (number_of_matched / number_of_expressions) * 100
     print("\n\n\n\tBroj tacno izracunatih izraza koriscenjem jednostavno NN je: {0}"\
-        "\n\tUspesnost postignuta primenom jednostavne CNN je: {1}%."\
+        "\n\tUspesnost postignuta primenom jednostavne NN je: {1}%."\
             .format(number_of_matched, procent))
 
     return procent
