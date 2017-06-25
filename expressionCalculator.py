@@ -358,7 +358,9 @@ def makeSimpleCNN():
     # Definisemo model
     model = simpleCNNModel(img_data)
     # Radimo trenisajne
-    model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=num_epoch, batch_size=200, verbose=2)
+    hist = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=num_epoch, batch_size=200, verbose=2)
+    # prikazujemo informacije o samom procesu treniranja
+    showInformationAboutTraining(hist)
     # Procena modela
     scores = model.evaluate(X_test, y_test, verbose=0)
     print("\n\n\nOvo je greska nakon treniranja jednostavne CNN: {0:.2f}%".format(100-scores[1]*100))
@@ -561,7 +563,9 @@ def makeSimpleNN():
     # Definisemo model
     model = simpleNNModel(img_data)
     # Radimo trenisajne
-    model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=num_epoch, batch_size=200, verbose=2)
+    hist = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=num_epoch, batch_size=200, verbose=2)
+    # prikazujemo informacije o samom procesu treniranja
+    showInformationAboutTraining(hist)
     # Procena modela
     scores = model.evaluate(X_test, y_test, verbose=0)
     print("\n\n\nOvo je greska nakon treniranja jednostavne CNN: {0:.2f}%".format(100-scores[1]*100))
@@ -651,7 +655,7 @@ def prepareImageForPredictionNN(myResizedImage):
 
     return test_image
 
-    
+
 
 def evaluateSimpleNN(real_results):
     """
@@ -687,6 +691,45 @@ def evaluateSimpleNN(real_results):
 ================================================================================
     Globalni deo
 """
+
+
+def showInformationAboutTraining(hist):
+    """
+        Funkcija koja prikazuje informacije o procesu treniranja
+    """
+
+    # visualizing losses and accuracy
+    train_loss=hist.history['loss']
+    val_loss=hist.history['val_loss']
+    train_acc=hist.history['acc']
+    val_acc=hist.history['val_acc']
+    xc=range(num_epoch)
+
+    plt.figure(1,figsize=(7,5))
+    plt.plot(xc,train_loss)
+    plt.plot(xc,val_loss)
+    plt.xlabel('num of Epochs')
+    plt.ylabel('loss')
+    plt.title('train_loss vs val_loss')
+    plt.grid(True)
+    plt.legend(['train','val'])
+    #print plt.style.available # use bmh, classic,ggplot for big pictures
+    plt.style.use(['classic'])
+
+    plt.figure(2,figsize=(7,5))
+    plt.plot(xc,train_acc)
+    plt.plot(xc,val_acc)
+    plt.xlabel('num of Epochs')
+    plt.ylabel('accuracy')
+    plt.title('train_acc vs val_acc')
+    plt.grid(True)
+    plt.legend(['train','val'],loc=4)
+    #print plt.style.available # use bmh, classic,ggplot for big pictures
+    plt.style.use(['classic'])
+    plt.show()
+    input("")
+
+
 
 
 
@@ -758,6 +801,11 @@ def main():
 
     processSimpleCNN()
     processSimpleNN()
+
+
+
+
+
 
 
 
