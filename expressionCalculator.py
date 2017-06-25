@@ -390,6 +390,7 @@ def makeSimpleCNN():
 PATH_EXPRESSIONS = CURRENT_PATH + "/expressions"
 PATH_RESULTS = CURRENT_PATH + "/results"
 PATH_RESULTS_SIMPLE_CNN = PATH_RESULTS + "/simple_cnn.txt"
+PATH_RESULTS_SIMPLE_NN = PATH_RESULTS + "/simple_nn.txt"
 PATH_RESULTS_REAL= PATH_RESULTS + "/real.txt"
 
 
@@ -452,7 +453,7 @@ def calucateOneExpressionSimpleCNN(expression_parts, model):
     # prolazimo kroz sve delove izraza koji su objekti klase MyResizedImage
     for myResizedImage in expression_parts:
         # pripremimo sliku za predikciju
-        predict_image = prepareImageForPrediction(myResizedImage)
+        predict_image = prepareImageForPredictionCNN(myResizedImage)
         predited_class = model.predict_classes(predict_image)
         prediction_characters.append(names[predited_class[0]])
 
@@ -464,7 +465,7 @@ def calucateOneExpressionSimpleCNN(expression_parts, model):
     retVal = "{0}={1}".format(string_expression, result_expression)
     return retVal
 
-def prepareImageForPrediction(myResizedImage):
+def prepareImageForPredictionCNN(myResizedImage):
     """
         Metoda koja od objekta klase MyResizedImage pravi odgovarajucu sliku
         za pustanje u neuralnu mrezu
@@ -475,6 +476,7 @@ def prepareImageForPrediction(myResizedImage):
     test_image = np.array(test_image)
     test_image = test_image.astype('float32')
     test_image /= 255
+
     print (test_image.shape)
 
     # imamo 1 kanal i radimo sa Theanom
@@ -531,7 +533,7 @@ def evaluateSimpleCNN(real_results):
         Funkcija koja ucitava rezultate koje je jednostavna CNN ucitala,
         poredi ih sa pravim rezultati i vraca procenta pogadjanja.
     """
-    f = open(PATH_RESULTS + "/simple_cnn.txt")
+    f = open(PATH_RESULTS_SIMPLE_CNN)
     simple_cnn_results = f.read().strip().split("\n")
     f.close()
     number_of_expressions = len(real_results)
@@ -557,25 +559,199 @@ def evaluateSimpleCNN(real_results):
 
 """
 ================================================================================
+    Deo za jednostavnu NN
+"""
+
+def makeSimpleNN():
+    """
+        Metoda koja:
+            1. ucitava podatke u odgovarajucem formatu
+            2. vrsi njihovo labeliranje
+            3. prebacuje labele u izlazni format mreze (niz od 16 koji ima samo
+                jednu jedinicu)
+            4. Malo promesamo podatke
+            5. Odvojimo testne podatke, da budu 1/5 dataseta
+            6. Kreiramo model
+            7. Fitujemo model
+            8. Vrsimo procenu modela i prikazujemo gresku
+    """
+
+    img_data = loadDatasetInProperFormat()
+    labels = makeLabels(img_data)
+    # labele u odgovarajucem formatu
+    Y = np_utils.to_categorical(labels, num_classes)
+    # Malo promesamo podatke
+    x,y = shuffle(img_data,Y, random_state=2)
+    # Podelimo dataset na training_set i test_set u odnosu 4:1
+    X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=2)
+
+    # -------------------------------------------------
+
+    # sliku dimenzije 32x32 prebacujemo i niz od 1024 pixela
+    # kod Theana je (broj_primeraka, broj kanala, sirina, visina)
+    num_pixels = X_train.shape[2] * X_train.shape[3]
+    X_train = X_train.reshape(X_train.shape[0], num_pixels).astype('float32')
+    X_test = X_test.reshape(X_test.shape[0], num_pixels).astype('float32')
+
+    # Definisemo model
+    model = simpleNNModel(img_data)
+    # Radimo trenisajne
+    model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=num_epoch, batch_size=200, verbose=2)
+    # Procena modela
+    scores = model.evaluate(X_test, y_test, verbose=0)
+    print("\n\n\nOvo je greska nakon treniranja jednostavne CNN: {0:.2f}%".format(100-scores[1]*100))
+    return model
+
+
+
+def simpleNNModel(img_data):
+    """
+        Kreiramo jednostavnu neuralnu mrezu.
+    """
+
+    # da uvek dobijemo isti rezultat
+    seed = 7
+    np.random.seed(seed)
+
+    # Kreiramo model
+    num_pixels = RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT
+    model = Sequential()
+    model.add(Dense(num_pixels, input_dim=num_pixels, kernel_initializer='normal', activation='relu'))
+    model.add(Dense(num_classes, kernel_initializer='normal', activation='softmax'))
+    # kompajliramo ga
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    return model
+
+
+def calucateAllExpressionsSimpleNN(exrepssions_parts, model):
+    """
+        Funkcija koja racuna sve vrednosti izraza koriscenjem NN
+    """
+    output = ""
+    for i, expression_parts in enumerate(exrepssions_parts):
+        expressionAndResult = calucateOneExpressionSimpleNN(expression_parts, model)
+        output += expressionAndResult + "\n"
+        print("Izraz sa rednim brojem {0}. je: {1}.".format(i, expressionAndResult))
+    # upisujemo rezultate u odgovarajuci fajl
+    f = open(PATH_RESULTS_SIMPLE_NN, 'w')
+    f.write(output.strip())
+    f.close()
+
+def calucateOneExpressionSimpleNN(expression_parts, model):
+    """
+        Metoda koja slike pronadjenih karaktera pusta na NN
+        i vraca string oblika: "string_izraz=vrednost_izraza".
+    """
+    # predikovani karakteri
+    prediction_characters = []
+    # prolazimo kroz sve delove izraza koji su objekti klase MyResizedImage
+    for myResizedImage in expression_parts:
+        # pripremimo sliku za predikciju
+        predict_image = prepareImageForPredictionNN(myResizedImage)
+        predited_class = model.predict_classes(predict_image)
+        prediction_characters.append(names[predited_class[0]])
+
+    # kako izgleda prepoznati izra
+    string_expression = "".join(prediction_characters)
+    # koja je njegova vrednost
+    result_expression = eval(string_expression)
+    # string koji vracamo ima format "string_izra=vrednost_izraza"
+    retVal = "{0}={1}".format(string_expression, result_expression)
+    return retVal
+
+
+def prepareImageForPredictionNN(myResizedImage):
+    """
+        Metoda koja od objekta klase MyResizedImage pravi odgovarajucu sliku
+        za pustanje u neuralnu mrezu
+    """
+    test_image = myResizedImage.image
+    # test_image=cv2.cvtColor(test_image, cv2.COLOR_BGR2GRAY)
+    # test_image=cv2.resize(test_image,(RESIZED_IMAGE_WIDTH,RESIZED_IMAGE_HEIGHT))
+    test_image = np.array(test_image)
+    test_image = test_image.astype('float32')
+    test_image /= 255
+
+    print (test_image.shape)
+
+    # imamo 1 kanal i radimo sa Theanom
+    test_image= np.expand_dims(test_image, axis=0)
+    test_image= np.expand_dims(test_image, axis=0)
+    print (test_image.shape)
+
+
+    # sada jos sliku iz matricnog oblika da prebacimo u niz
+    num_pixels = test_image.shape[2] * test_image.shape[3]
+    test_image = test_image.reshape(test_image.shape[0], num_pixels).astype('float32')
+
+    return test_image
+
+    # if NUMBER_OF_CHANNELS==1:
+    # 	if K.image_dim_ordering()=='th':
+    # 		test_image= np.expand_dims(test_image, axis=0)
+    # 		test_image= np.expand_dims(test_image, axis=0)
+    # 		print (test_image.shape)
+    # 	else:
+    # 		test_image= np.expand_dims(test_image, axis=3)
+    # 		test_image= np.expand_dims(test_image, axis=0)
+    # 		print (test_image.shape)
+    #
+    # else:
+    # 	if K.image_dim_ordering()=='th':
+    # 		test_image=np.rollaxis(test_image,2,0)
+    # 		test_image= np.expand_dims(test_image, axis=0)
+    # 		print (test_image.shape)
+    # 	else:
+    # 		test_image= np.expand_dims(test_image, axis=0)
+    # 		print (test_image.shape)
+    #
+    # return test_image
+
+def evaluateSimpleNN(real_results):
+    """
+        Funkcija koja ucitava rezultate koje je jednostavna CNN ucitala,
+        poredi ih sa pravim rezultati i vraca procenta pogadjanja.
+    """
+    f = open(PATH_RESULTS_SIMPLE_NN)
+    simple_nn_results = f.read().strip().split("\n")
+    f.close()
+    number_of_expressions = len(real_results)
+    if number_of_expressions != len(simple_nn_results):
+        raise Exception("Nisu svi izrazi izracunati")
+
+    # broj izraza koji se poklapaju
+    number_of_matched = 0
+    for i in range(number_of_expressions):
+        if real_results[i].strip() == simple_nn_results[i].strip():
+            number_of_matched += 1
+
+    # procentualna uspesno jednostavne NN
+    procent = (number_of_matched / number_of_expressions) * 100
+    print("Broj tacno izracunatih izraza koriscenjem jednostavno CNN je: {0}"\
+        "\nUspesnost postignuta primenom jednostavne CNN je: {1}%."\
+            .format(number_of_matched, procent))
+
+    return procent
+
+
+
+
+
+"""
+================================================================================
     Globalni deo
 """
 
 
-def main():
+
+def processSimpleCNN():
     """
-        Metoda od koje krece izvrsavanje programa. Po potrebi priprema dataset
-        i izgradjuje jednostanu CNN. Zatim ucitava pripremljene izraze,
-        prepoznaje i izracunava. Izracunate vrednosti se porede sa stvarnim
-        vrednostima izrazima i prikazuje se koliko je uspesan postupak
-        prepoznavanja i izracunavanja izraza
+        Metoda koja obavlja ceo postupak jednostavne CNN:
+            1. izgradnju CNN
+            2. izdvajanje karaktera sa slike
+            3. ucitavanje stvarnih rezultata
+            4. provera koliko dobro CNN radi
     """
-
-
-
-    # da li je potrebna priprema dataseta
-    if not os.path.isdir(OUTPUT_FOLDER_PATH):
-        print("\n\n\n***Pripremamo dataset.")
-        prepareCharacters()
 
     simpleCNNModel = None
     # da li je potrebno treniranje jednostavne CNN
@@ -592,8 +768,50 @@ def main():
     calucateAllExpressionsSimpleCNN(exrepssions_parts, simpleCNNModel)
     # ucitavamo sve izraze
     real_results = readRealResults()
-
+    # provera koliko dobro radi CNN
     evaluateSimpleCNN(real_results)
+
+
+def processSimpleNN():
+    """
+        Metoda koja obavlja ceo postupak jednostavne CNN:
+            1. izgradnju NN
+            2. izdvajanje karaktera sa slike
+            3. ucitavanje stvarnih rezultata
+            4. provera koliko dobro NN radi
+    """
+
+    simpleNNModel = None
+    # da li je potrebno treniranje jednostavne CNN
+    if not os.path.isfile(CURRENT_PATH+"/simpleNNModel.hdf5"):
+        print("\n\n\n***Proces treniranja.")
+        simpleNNModel = makeSimpleNN()
+        simpleNNModel.save("simpleNNModel.hdf5")
+    else:
+        simpleNNModel = load_model("simpleNNModel.hdf5")
+
+    # jednostavna CNN mreza trazi i racuna izraze
+    exrepssions_parts = findPartsOfAllExpressions()
+    # racunamo sve izraze koriscenjem NN
+    calucateAllExpressionsSimpleNN(exrepssions_parts, simpleNNModel)
+    # ucitavamo sve izraze
+    real_results = readRealResults()
+    # provera koliko dobro radi CNN
+    evaluateSimpleNN(real_results)
+
+
+def main():
+    """
+
+    """
+
+    # da li je potrebna priprema dataseta
+    if not os.path.isdir(OUTPUT_FOLDER_PATH):
+        print("\n\n\n***Pripremamo dataset.")
+        prepareCharacters()
+
+    processSimpleCNN()
+    processSimpleNN()
 
 
 
