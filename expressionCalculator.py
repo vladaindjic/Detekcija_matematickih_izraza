@@ -71,7 +71,7 @@ def makeBlackAndWhitePhoto(path):
     imgTrainingNumbers = cv2.imread(path)                       # ucitavanje slike
 
     if imgTrainingNumbers is None:                              # ako slika nije ucitana
-        print ("error: image not read from file \n\n")          # prikazujemo gresku
+        print ("error: Slika nije ucitana iz fajla: {0} \n\n".format(path))          # prikazujemo gresku
         sys.exit()                                              # i gasimo program
         return
 
@@ -272,7 +272,7 @@ def loadDatasetInProperFormat():
     	dir_path = data_path + '/' + dataset
 
     	if os.path.isfile(dir_path):
-    		print("Imamo jedan fajl")  # ako se slucajno nadje neki fajl, preskacemo ga
+    		#print("Imamo jedan fajl")  # ako se slucajno nadje neki fajl, preskacemo ga
     		continue
         # Izlistavanje fotografija
     	img_list=os.listdir(dir_path)
@@ -284,14 +284,14 @@ def loadDatasetInProperFormat():
     		img_data_list.append(input_img_resize)
 
 
-    print("Velicina dataseta je: {0}".format(len(img_data_list)))
+    print("\n\n\n\tVelicina dataseta je: {0}".format(len(img_data_list)))
     # slike iz liste prebacujemo u numpy niz
     img_data = np.array(img_data_list)
     # prebacujemo u float32 reprezentaciju
     img_data = img_data.astype('float32')
     # vrsimo normalizaciju
     img_data /= 255
-    print ("Ovako nam izgleda dataset kada se ucita u numpy niz: {0}".format(img_data.shape))
+    print ("\n\n\n\tOvako nam izgleda dataset kada se ucita u numpy niz: {0}".format(img_data.shape))
 
 
     # posto radimo sa Theanom
@@ -308,7 +308,7 @@ def makeLabels(img_data):
 
     num_of_samples = img_data.shape[0]
     num_of_samples_per_class = num_of_samples // NUMBER_OF_CHARACTERS
-    print("\n\n\nOvoliko imamo primeraka po klasi: {0}".format( num_of_samples_per_class))
+    print("\n\n\n\tOvoliko imamo primeraka po klasi: {0}".format( num_of_samples_per_class))
     labels = np.ones((num_of_samples,),dtype='int64')
 
     for i in range(NUMBER_OF_CHARACTERS):
@@ -363,7 +363,7 @@ def makeSimpleCNN():
     showInformationAboutTraining(hist)
     # Procena modela
     scores = model.evaluate(X_test, y_test, verbose=0)
-    print("\n\n\nOvo je greska nakon treniranja jednostavne CNN: {0:.2f}%".format(100-scores[1]*100))
+    print("\n\n\n\tOvo je greska nakon treniranja jednostavne CNN: {0:.2f}%".format(100-scores[1]*100))
     return model
 
 
@@ -491,7 +491,7 @@ def readRealResults():
     f = open(PATH_RESULTS + "/real.txt", 'r')
     real_results = f.read().strip().split("\n");
     f.close()
-    print("Ukupan broj izraza je: {0}.".format(len(real_results)))
+    print("\n\n\n\tUkupan broj izraza je: {0}.".format(len(real_results)))
     return real_results
 
 
@@ -515,8 +515,8 @@ def evaluateSimpleCNN(real_results):
 
     # procentualna uspesno jednostavne CNN
     procent = (number_of_matched / number_of_expressions) * 100
-    print("Broj tacno izracunatih izraza koriscenjem jednostavno CNN je: {0}"\
-        "\nUspesnost postignuta primenom jednostavne CNN je: {1}%."\
+    print("\n\n\n\tBroj tacno izracunatih izraza koriscenjem jednostavno CNN je: {0}"\
+        "\n\tUspesnost postignuta primenom jednostavne CNN je: {1}%."\
             .format(number_of_matched, procent))
 
     return procent
@@ -568,7 +568,7 @@ def makeSimpleNN():
     showInformationAboutTraining(hist)
     # Procena modela
     scores = model.evaluate(X_test, y_test, verbose=0)
-    print("\n\n\nOvo je greska nakon treniranja jednostavne CNN: {0:.2f}%".format(100-scores[1]*100))
+    print("\n\n\n\tOvo je greska nakon treniranja jednostavne CNN: {0:.2f}%".format(100-scores[1]*100))
     return model
 
 
@@ -600,7 +600,7 @@ def calucateAllExpressionsSimpleNN(exrepssions_parts, model):
     for i, expression_parts in enumerate(exrepssions_parts):
         expressionAndResult = calucateOneExpressionSimpleNN(expression_parts, model)
         output += expressionAndResult + "\n"
-        print("Izraz sa rednim brojem {0}. je: {1}.".format(i, expressionAndResult))
+        print("\n\n\n\tIzraz sa rednim brojem {0}. je: {1}.".format(i, expressionAndResult))
     # upisujemo rezultate u odgovarajuci fajl
     f = open(PATH_RESULTS_SIMPLE_NN, 'w')
     f.write(output.strip())
@@ -677,8 +677,8 @@ def evaluateSimpleNN(real_results):
 
     # procentualna uspesno jednostavne NN
     procent = (number_of_matched / number_of_expressions) * 100
-    print("Broj tacno izracunatih izraza koriscenjem jednostavno CNN je: {0}"\
-        "\nUspesnost postignuta primenom jednostavne CNN je: {1}%."\
+    print("\n\n\n\tBroj tacno izracunatih izraza koriscenjem jednostavno NN je: {0}"\
+        "\n\tUspesnost postignuta primenom jednostavne CNN je: {1}%."\
             .format(number_of_matched, procent))
 
     return procent
@@ -698,7 +698,7 @@ def showInformationAboutTraining(hist):
         Funkcija koja prikazuje informacije o procesu treniranja
     """
 
-    # visualizing losses and accuracy
+    # prikazujemo gubitak i preciznost
     train_loss=hist.history['loss']
     val_loss=hist.history['val_loss']
     train_acc=hist.history['acc']
@@ -713,7 +713,6 @@ def showInformationAboutTraining(hist):
     plt.title('train_loss vs val_loss')
     plt.grid(True)
     plt.legend(['train','val'])
-    #print plt.style.available # use bmh, classic,ggplot for big pictures
     plt.style.use(['classic'])
 
     plt.figure(2,figsize=(7,5))
@@ -724,7 +723,6 @@ def showInformationAboutTraining(hist):
     plt.title('train_acc vs val_acc')
     plt.grid(True)
     plt.legend(['train','val'],loc=4)
-    #print plt.style.available # use bmh, classic,ggplot for big pictures
     plt.style.use(['classic'])
     plt.show()
     input("")
@@ -745,7 +743,7 @@ def processSimpleCNN():
     simpleCNNModel = None
     # da li je potrebno treniranje jednostavne CNN
     if not os.path.isfile(CURRENT_PATH+"/simpleCNNModel.hdf5"):
-        print("\n\n\n***Proces treniranja.")
+        print("\n\n\n\t***Proces treniranja CNN.")
         simpleCNNModel = makeSimpleCNN()
         simpleCNNModel.save("simpleCNNModel.hdf5")
     else:
@@ -773,7 +771,7 @@ def processSimpleNN():
     simpleNNModel = None
     # da li je potrebno treniranje jednostavne CNN
     if not os.path.isfile(CURRENT_PATH+"/simpleNNModel.hdf5"):
-        print("\n\n\n***Proces treniranja.")
+        print("\n\n\n\t***Proces treniranja NN.")
         simpleNNModel = makeSimpleNN()
         simpleNNModel.save("simpleNNModel.hdf5")
     else:
@@ -796,7 +794,7 @@ def main():
 
     # da li je potrebna priprema dataseta
     if not os.path.isdir(OUTPUT_FOLDER_PATH):
-        print("\n\n\n***Pripremamo dataset.")
+        print("\n\n\n\t***Pripremamo dataset.")
         prepareCharacters()
 
     processSimpleCNN()
