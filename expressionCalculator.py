@@ -299,21 +299,6 @@ def loadDatasetInProperFormat():
     print (img_data.shape)
     return img_data
 
-    # if num_channel==1:
-    # 	if K.image_dim_ordering()=='th':
-    # 		img_data= np.expand_dims(img_data, axis=1)
-    # 		print (img_data.shape)
-    # 	else:
-    # 		print("Broj kanala je 1 i koristimo Tensor Flow")
-    # 		img_data= np.expand_dims(img_data, axis=4)
-    # 		print (img_data.shape)
-    #
-    # else:
-    # 	if K.image_dim_ordering()=='th':
-    # 		img_data=np.rollaxis(img_data,3,1)
-    # 		print (img_data.shape)
-    #
-    # return img_data
 
 
 def makeLabels(img_data):
@@ -485,26 +470,6 @@ def prepareImageForPredictionCNN(myResizedImage):
     print (test_image.shape)
     return test_image
 
-    # if NUMBER_OF_CHANNELS==1:
-    # 	if K.image_dim_ordering()=='th':
-    # 		test_image= np.expand_dims(test_image, axis=0)
-    # 		test_image= np.expand_dims(test_image, axis=0)
-    # 		print (test_image.shape)
-    # 	else:
-    # 		test_image= np.expand_dims(test_image, axis=3)
-    # 		test_image= np.expand_dims(test_image, axis=0)
-    # 		print (test_image.shape)
-    #
-    # else:
-    # 	if K.image_dim_ordering()=='th':
-    # 		test_image=np.rollaxis(test_image,2,0)
-    # 		test_image= np.expand_dims(test_image, axis=0)
-    # 		print (test_image.shape)
-    # 	else:
-    # 		test_image= np.expand_dims(test_image, axis=0)
-    # 		print (test_image.shape)
-    #
-    # return test_image
 
 
 
@@ -686,26 +651,7 @@ def prepareImageForPredictionNN(myResizedImage):
 
     return test_image
 
-    # if NUMBER_OF_CHANNELS==1:
-    # 	if K.image_dim_ordering()=='th':
-    # 		test_image= np.expand_dims(test_image, axis=0)
-    # 		test_image= np.expand_dims(test_image, axis=0)
-    # 		print (test_image.shape)
-    # 	else:
-    # 		test_image= np.expand_dims(test_image, axis=3)
-    # 		test_image= np.expand_dims(test_image, axis=0)
-    # 		print (test_image.shape)
-    #
-    # else:
-    # 	if K.image_dim_ordering()=='th':
-    # 		test_image=np.rollaxis(test_image,2,0)
-    # 		test_image= np.expand_dims(test_image, axis=0)
-    # 		print (test_image.shape)
-    # 	else:
-    # 		test_image= np.expand_dims(test_image, axis=0)
-    # 		print (test_image.shape)
-    #
-    # return test_image
+    
 
 def evaluateSimpleNN(real_results):
     """
