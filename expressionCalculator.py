@@ -9,12 +9,17 @@
         - arial
         - times new roman
         - PT Mono
+        - America Typerwriter
+        - Apple Chancery
+        - Comic Sans MS
+        - Verdana
+        - Andale Mono
 
 
 """
 
 
-import os,cv2, sys
+import os,cv2, sys, time
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -83,9 +88,11 @@ def makeBlackAndWhitePhoto(path):
                                       255,                                  # pixeli koji prodju threshold neka budu beli
                                       cv2.ADAPTIVE_THRESH_GAUSSIAN_C,       # gausian daje bolje rezultate od meana
                                       cv2.THRESH_BINARY_INV,                # pozadina da bude crna, a slova da budu bela
-                                      11,                                   # velicina piksela suseda koji se koristi za racunanje threshold
+                                      41,                                   # velicina piksela suseda koji se koristi za racunanje threshold
                                       2)                                    # konstanta koja se oduzima od sredine
     # vraticemo sliku koja je potpuno crno bela
+    # cv2.imshow("Ovako izgleda kada thresholdujemo", imgThresh)
+    # cv2.waitKey(0)
     return imgThresh
 
 
@@ -119,7 +126,7 @@ def getImageOfCharacters(photo):
             [intX, intY, intW, intH] = cv2.boundingRect(npaContour)
 
 
-            # # # ukoliko zelimo da crtamo konture, moze se ukljuciti za debagovanje
+            # # # # ukoliko zelimo da crtamo konture, moze se ukljuciti za debagovanje
             # cv2.rectangle(photo,           # draw rectangle on original training image
             #               (intX, intY),                 # gornji levi ugao
             #               (intX+intW,intY+intH),        # donji desni ugao
@@ -326,7 +333,9 @@ def simpleCNNModel(img_data):
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.2))
     model.add(Flatten())
-    model.add(Dense(128, activation='relu'))
+    num_pixels = RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT
+    model.add(Dense(256, activation='relu'))
+    # model.add(Dense(num_pixels, activation='relu'))
     model.add(Dense(num_classes, activation='softmax'))
     # kompajliramo model
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -357,13 +366,18 @@ def makeSimpleCNN():
     X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=2)
     # Definisemo model
     model = simpleCNNModel(img_data)
-    # Radimo trenisajne
-    hist = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=num_epoch, batch_size=200, verbose=2)
+    startTime = time.time()
+    # Radimo treniranje
+    hist = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=num_epoch, batch_size=10, verbose=2)
+    endTime = time.time()
+    timeNeedForTraining = endTime - startTime
+    logCNN("\n>>>Vreme potrebno za treniranje CNN je: {0}ms.".format(timeNeedForTraining))
     # prikazujemo informacije o samom procesu treniranja
-    showInformationAboutTraining(hist)
+    showInformationAboutTraining(hist, num_epoch)
     # Procena modela
     scores = model.evaluate(X_test, y_test, verbose=0)
     print("\n\n\n\tOvo je greska nakon treniranja jednostavne CNN: {0:.2f}%".format(100-scores[1]*100))
+    logCNN("\n>>>Ovo je greska nakon treniranja jednostavne CNN: {0:.2f}%".format(100-scores[1]*100))
     return model
 
 
@@ -376,9 +390,15 @@ def makeSimpleCNN():
 
 PATH_EXPRESSIONS = CURRENT_PATH + "/expressions"
 PATH_RESULTS = CURRENT_PATH + "/results"
+PATH_ERRORS = CURRENT_PATH + "/errors"
+PATH_LOGS = CURRENT_PATH + "/logs"
 PATH_RESULTS_SIMPLE_CNN = PATH_RESULTS + "/simple_cnn.txt"
 PATH_RESULTS_SIMPLE_NN = PATH_RESULTS + "/simple_nn.txt"
 PATH_RESULTS_REAL= PATH_RESULTS + "/real.txt"
+PATH_ERRORS_NN = PATH_ERRORS + "/nn.txt"
+PATH_ERRORS_CNN = PATH_ERRORS + "/cnn.txt"
+PATH_LOGS_NN = PATH_LOGS + "/nn.txt"
+PATH_LOGS_CNN = PATH_LOGS + "/cnn.txt"
 
 
 def findPartsOfAllExpressions():
@@ -448,10 +468,16 @@ def calucateOneExpressionSimpleCNN(expression_parts, model):
     string_expression = "".join(prediction_characters)
     # koja je njegova vrednost
     print("Ovde mi nesto puca a nemam pojma zasto: {0}".format(string_expression))
-    result_expression = eval(string_expression)
-    # string koji vracamo ima format "string_izra=vrednost_izraza"
-    retVal = "{0}={1}".format(string_expression, result_expression)
-    return retVal
+    try:
+        # racunamo vrednost
+        result_expression = eval(string_expression)
+        # string koji vracamo ima format "string_izra=vrednost_izraza"
+        retVal = "{0}={1}".format(string_expression, result_expression)
+        return retVal
+    except:
+        # ako ne moze da se izracuna, samo vratimo sta smo prepoznali
+        return string_expression
+
 
 def prepareImageForPredictionCNN(myResizedImage):
     """
@@ -513,11 +539,16 @@ def evaluateSimpleCNN(real_results):
     for i in range(number_of_expressions):
         if real_results[i].strip() == simple_cnn_results[i].strip():
             number_of_matched += 1
+        else:
+            errorCNN(real_results[i], simple_cnn_results[i], i)
 
     # procentualna uspesno jednostavne CNN
     procent = (number_of_matched / number_of_expressions) * 100
     print("\n\n\n\tBroj tacno izracunatih izraza koriscenjem jednostavno CNN je: {0}"\
         "\n\tUspesnost postignuta primenom jednostavne CNN je: {1}%."\
+            .format(number_of_matched, procent))
+    logCNN("\n>>>Broj tacno izracunatih izraza koriscenjem jednostavno CNN je: {0}"\
+           "\n\tUspesnost postignuta primenom jednostavne CNN je: {1}%."\
             .format(number_of_matched, procent))
 
     return procent
@@ -563,13 +594,18 @@ def makeSimpleNN():
 
     # Definisemo model
     model = simpleNNModel(img_data)
+    startTime = time.time()
     # Radimo trenisajne
     hist = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=num_epoch, batch_size=200, verbose=2)
+    endTime = time.time()
+    timeNeedForTraining = endTime - startTime
+    logNN("\n>>>Vreme potrebno za treniranje NN: {0}ms.".format(timeNeedForTraining))
     # prikazujemo informacije o samom procesu treniranja
-    showInformationAboutTraining(hist)
+    showInformationAboutTraining(hist, num_epoch)
     # Procena modela
     scores = model.evaluate(X_test, y_test, verbose=0)
     print("\n\n\n\tOvo je greska nakon treniranja jednostavne NN: {0:.2f}%".format(100-scores[1]*100))
+    logNN("\n>>>Ovo je greska nakon treniranja jednostavne NN: {0:.2f}%".format(100-scores[1]*100))
     return model
 
 
@@ -623,11 +659,15 @@ def calucateOneExpressionSimpleNN(expression_parts, model):
 
     # kako izgleda prepoznati izra
     string_expression = "".join(prediction_characters)
-    # koja je njegova vrednost
-    result_expression = eval(string_expression)
-    # string koji vracamo ima format "string_izra=vrednost_izraza"
-    retVal = "{0}={1}".format(string_expression, result_expression)
-    return retVal
+    try:
+        # koja je njegova vrednost
+        result_expression = eval(string_expression)
+        # string koji vracamo ima format "string_izra=vrednost_izraza"
+        retVal = "{0}={1}".format(string_expression, result_expression)
+        return retVal
+    except:
+        # vratimo koja je greska
+        return string_expression
 
 
 def prepareImageForPredictionNN(myResizedImage):
@@ -675,10 +715,15 @@ def evaluateSimpleNN(real_results):
     for i in range(number_of_expressions):
         if real_results[i].strip() == simple_nn_results[i].strip():
             number_of_matched += 1
+        else:
+            errorNN(real_results[i], simple_nn_results[i], i)
 
     # procentualna uspesno jednostavne NN
     procent = (number_of_matched / number_of_expressions) * 100
     print("\n\n\n\tBroj tacno izracunatih izraza koriscenjem jednostavno NN je: {0}"\
+        "\n\tUspesnost postignuta primenom jednostavne NN je: {1}%."\
+            .format(number_of_matched, procent))
+    logNN("\n>>>Broj tacno izracunatih izraza koriscenjem jednostavno NN je: {0}"\
         "\n\tUspesnost postignuta primenom jednostavne NN je: {1}%."\
             .format(number_of_matched, procent))
 
@@ -693,8 +738,36 @@ def evaluateSimpleNN(real_results):
     Globalni deo
 """
 
+def errorNN(realExpression, predictedExpression, number):
+    f = open(PATH_ERRORS_NN, "a")
+    output = "==========\n"
+    output += "Expresion: {0}.\n".format(number)
+    output += "Real expression: {0}\n".format(realExpression)
+    output += "Predicted value: {0}\n".format(number)
+    f.write(output)
+    f.close()
 
-def showInformationAboutTraining(hist):
+def logNN(output):
+    f = open(PATH_LOGS_NN, "a")
+    f.write(output)
+    f.close()
+
+def errorCNN(realExpression, predictedExpression, number):
+    f = open(PATH_ERRORS_CNN, "a")
+    output = "==========\n"
+    output += "Expresion: {0}.\n".format(number)
+    output += "Real expression: {0}\n".format(realExpression)
+    output += "Predicted value: {0}\n".format(number)
+    f.write(output)
+    f.close()
+
+def logCNN(output):
+    f = open(PATH_LOGS_CNN, "a")
+    f.write(output)
+    f.close()
+
+
+def showInformationAboutTraining(hist, num_epoch):
     """
         Funkcija koja prikazuje informacije o procesu treniranja
     """

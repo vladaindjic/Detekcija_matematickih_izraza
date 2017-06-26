@@ -1,0 +1,5 @@
+
+>>>Vreme potrebno za treniranje CNN je: 13.35403299331665ms.
+>>>Ovo je greska nakon treniranja jednostavne CNN: 0.00%
+>>>Broj tacno izracunatih izraza koriscenjem jednostavno CNN je: 30
+	Uspesnost postignuta primenom jednostavne CNN je: 100.0%.
