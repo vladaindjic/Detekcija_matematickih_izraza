@@ -743,7 +743,7 @@ def errorNN(realExpression, predictedExpression, number):
     output = "==========\n"
     output += "Expresion: {0}.\n".format(number)
     output += "Real expression: {0}\n".format(realExpression)
-    output += "Predicted value: {0}\n".format(number)
+    output += "Predicted value: {0}\n".format(predictedExpression)
     f.write(output)
     f.close()
 
@@ -757,7 +757,7 @@ def errorCNN(realExpression, predictedExpression, number):
     output = "==========\n"
     output += "Expresion: {0}.\n".format(number)
     output += "Real expression: {0}\n".format(realExpression)
-    output += "Predicted value: {0}\n".format(number)
+    output += "Predicted value: {0}\n".format(predictedExpression)
     f.write(output)
     f.close()
 
