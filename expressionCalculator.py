@@ -19,7 +19,7 @@
 """
 
 
-import os,cv2, sys, time
+import os,cv2, sys, time, shutil
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -861,10 +861,42 @@ def processSimpleNN():
     evaluateSimpleNN(real_results)
 
 
+def clearProject():
+    """
+        Metoda koja uklanja datset i cisti foldere logs i errors.
+    """
+    # uklanjamo dataset
+    if os.path.isdir(OUTPUT_FOLDER_PATH):
+        shutil.rmtree(OUTPUT_FOLDER_PATH)
+
+    # uklanjamo sve iz logs foldera
+    if os.path.isfile(PATH_LOGS_NN):
+        os.remove(PATH_LOGS_NN)
+    if os.path.isfile(PATH_LOGS_CNN):
+        os.remove(PATH_LOGS_CNN)
+
+    #uklanjamo sve iz error foldera
+    if os.path.isfile(PATH_ERRORS_NN):
+        os.remove(PATH_ERRORS_NN)
+    if os.path.isfile(PATH_ERRORS_CNN):
+        os.remove(PATH_ERRORS_CNN)
+
+    # cistimo trenirane mreze
+    if os.path.isfile(CURRENT_PATH + "/simpleNNModel.hdf5"):
+        os.remove(CURRENT_PATH + "/simpleNNModel.hdf5")
+    if os.path.isfile(CURRENT_PATH + "/simpleCNNModel.hdf5"):
+        os.remove(CURRENT_PATH + "/simpleCNNModel.hdf5")
+
+
 def main():
     """
-
+        Funkcija od koje krece izvrsavanje programa.
     """
+    # da li treba sve da se ocisit
+    if len(sys.argv) == 2:
+        if sys.argv[1] == "clear":
+            clearProject()
+
 
     # da li je potrebna priprema dataseta
     if not os.path.isdir(OUTPUT_FOLDER_PATH):

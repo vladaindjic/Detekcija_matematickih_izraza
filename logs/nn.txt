@@ -1,5 +1,5 @@
 
->>>Vreme potrebno za treniranje NN: 1.3900680541992188ms.
+>>>Vreme potrebno za treniranje NN: 1.386915922164917ms.
 >>>Ovo je greska nakon treniranja jednostavne NN: 0.00%
 >>>Broj tacno izracunatih izraza koriscenjem jednostavno NN je: 48
 	Uspesnost postignuta primenom jednostavne NN je: 96.0%.
