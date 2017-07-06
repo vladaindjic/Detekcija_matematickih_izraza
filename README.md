@@ -2,7 +2,7 @@
 Detekcija i izracunavanje matematickih izraza prikazanih na slici.
 
 Implementirane su jednostavna konvolucijska i jednostavna neuralna mreza.
-Na pripremljenom skupu slika (dataset) procenat uspesnosti pri treniranju obe mreze iznosi 100%. Obe imaju istu uspesnost u prepoznavanju izraza datih na posebnom skupu od 50 slike u folderu "expressions", koja iznosi
+Na pripremljenom skupu slika (dataset) procenat uspesnosti pri treniranju obe mreze iznosi 100%. Obe imaju istu uspesnost u prepoznavanju izraza datih na 50 slika u folderu "expressions", koja iznosi
 94-96%. S obzirom da se NN daleko brze trenira od CNN, za ovaj problem je
 pogodnija upotreba NN.
 
