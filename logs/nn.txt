@@ -3,3 +3,5 @@
 >>>Ovo je greska nakon treniranja jednostavne NN: 0.00%
 >>>Broj tacno izracunatih izraza koriscenjem jednostavno NN je: 47
 	Uspesnost postignuta primenom jednostavne NN je: 94.0%.
+>>>Broj tacno izracunatih izraza koriscenjem jednostavno NN je: 47
+	Uspesnost postignuta primenom jednostavne NN je: 94.0%.
